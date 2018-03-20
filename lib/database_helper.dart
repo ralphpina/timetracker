@@ -16,7 +16,7 @@ Database _db;
 TagsProvider _tagsProvider;
 TasksProvider _tasksProvider;
 
-Future<TasksProvider> getTaskProvider() async {
+Future<TasksProvider> get taskProvider async {
   await _initDb();
   return _tasksProvider;
 }

@@ -2,9 +2,21 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 
 import 'database_helper.dart' as dbHelper;
 import 'tasks.dart';
+import 'tasks_dialog.dart';
+
+enum MenuAction { Edit, Delete }
+
+@immutable
+class MenuItem {
+  MenuItem(this.task, this.action);
+
+  final Task task;
+  final MenuAction action;
+}
 
 class Home extends StatefulWidget {
   @override
@@ -12,15 +24,16 @@ class Home extends StatefulWidget {
 }
 
 class HomeState extends State<Home> {
-  HomeState() {
-    dbHelper.getTaskProvider()
+  final _tasks = <Task>[];
+  final _biggerFont = const TextStyle(fontSize: 18.0);
+
+  @override
+  void initState() {
+    super.initState();
+    dbHelper.taskProvider
         .then((provider) => provider.getAll())
         .then((tasks) => setState(() => _tasks.addAll(tasks)));
   }
-
-  final _tasks = <Task>[];
-
-  final _biggerFont = const TextStyle(fontSize: 18.0);
 
   @override
   Widget build(BuildContext context) {
@@ -31,34 +44,26 @@ class HomeState extends State<Home> {
           new IconButton(icon: new Icon(Icons.list), onPressed: null)
         ],
       ),
-      body: _buildSuggestions(),
+      body: _getTasksList(),
       floatingActionButton: new FloatingActionButton(
-        onPressed: _incrementCounter,
+        onPressed: _addTask,
         tooltip: 'Add task',
         child: new Icon(Icons.add),
       ),
     );
   }
 
-  Future<void> _incrementCounter() {
-    print("_incrementCounter");
-    final Task task = Task(
-        "some title",
-        "some description",
-        DateTime.now().toUtc(),
-        DateTime.now().add(new Duration(hours: 1)).toUtc());
-
-    return dbHelper.getTaskProvider()
-        .then((provider) => provider.insert(task))
+  Future<Task> _addTask() => _taskAddOrEditDialog().then<Task>((newTask) {
+    dbHelper.taskProvider
+        .then((provider) => provider.insert(newTask))
         .then((task) => setState(() => _tasks.add(task)));
-  }
+  });
 
-  Widget _buildSuggestions() {
+  Widget _getTasksList() {
     return new ListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemCount: _tasks.length,
       itemBuilder: (context, i) {
-//        if (i.isOdd) return new Divider();
         return _buildRow(_tasks[i]);
       },
     );
@@ -70,14 +75,64 @@ class HomeState extends State<Home> {
         task.title,
         style: _biggerFont,
       ),
-      trailing: new Icon(
-        Icons.favorite,
-        color: Colors.red,
+      trailing: new PopupMenuButton<MenuItem>(
+        // overflow menu
+        onSelected: _onMenuSelection,
+        itemBuilder: (BuildContext context) {
+          return MenuAction.values.map((action) {
+            return new PopupMenuItem<MenuItem>(
+              value: new MenuItem(task, action),
+              child: new Text(_menuItemName(action)),
+            );
+          }).toList();
+        },
       ),
-      onTap: () {
-        debugPrint("Tapped heart");
-        setState(() {},);
-      },
+      onTap: () => _editItem(task),
+    );
+  }
+
+  String _menuItemName(MenuAction action) => _capitalize(
+      action.toString().substring(action.toString().indexOf('.') + 1));
+
+  String _capitalize(String s) => '${s[0].toUpperCase()}${s.substring(1)}';
+
+  void _onMenuSelection(MenuItem menuItem) {
+    switch (menuItem.action) {
+      case MenuAction.Delete:
+        _deleteItem(menuItem.task.id);
+        break;
+      case MenuAction.Edit:
+        _editItem(menuItem.task);
+        break;
+    }
+  }
+
+  void _editItem(Task task) {
+    _taskAddOrEditDialog(task: task).then<Task>((updatedTask) {
+      dbHelper.taskProvider
+          .then((provider) => provider.update(updatedTask))
+          .then((ignore) => setState(() {
+        for (int i = 0; i < _tasks.length; i++) {
+          if (_tasks[i].id == updatedTask.id) {
+            _tasks[i] = updatedTask;
+            break;
+          }
+        }
+      }));
+    });
+  }
+
+  Future<void> _deleteItem(int taskId) {
+    return dbHelper.taskProvider
+        .then((provider) => provider.delete(taskId))
+        .then((ignore /* num rows affected, always 1 */) =>
+            setState(() => _tasks.removeWhere((task) => task.id == taskId)));
+  }
+
+  Future<Task> _taskAddOrEditDialog({Task task}) async {
+    return showDialog<Task>(
+      context: context,
+      child: new AddOrEditTaskDialog(task),
     );
   }
 }
