@@ -3,6 +3,7 @@
 
 import 'package:test/test.dart';
 import 'package:timetracker/tasks.dart';
+import 'package:timetracker/tags.dart';
 //import 'package:sqflite/sqflite.dart';
 //import 'package:timetracker/database_helper.dart';
 
@@ -19,13 +20,14 @@ void main() {
       tasksColumnEndTime: nowPlusHour.toIso8601String()
     };
 
-    final Task task = Task.fromMap(map);
+    final Task task = Task.fromMap(map, new List<Map>());
 
     expect(task.id, 2);
     expect(task.title, "some title");
     expect(task.description, "some description");
     expect(task.startTime, now);
     expect(task.endTime, nowPlusHour);
+    expect(task.tags, isEmpty);
   });
 
   test('Convert to map', () {
@@ -80,6 +82,84 @@ void main() {
     expect(task.description, another.description);
     expect(task.startTime, another.startTime);
     expect(task.endTime, another.endTime);
+    expect(task.hasTags, false);
+  });
+
+  test('Add tag gives you new object', () {
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime nowPlusHour = now.add(new Duration(hours: 1)).toUtc();
+
+    final Task task = new Task(
+        "some title",
+        "some description",
+        now,
+        nowPlusHour);
+
+    expect(task.hasTags, false);
+
+    final Tag tag = new Tag('Stuff', id: 1);
+    final Task another = task.addTag(tag);
+
+    expect(task.id, isNull);
+    expect(another.id, isNull);
+    expect(task.title, another.title);
+    expect(task.description, another.description);
+    expect(task.startTime, another.startTime);
+    expect(task.endTime, another.endTime);
+    expect(task.hasTags, false);
+    expect(another.hasTags, true);
+    expect(another.tags, hasLength(1));
+  });
+
+  test('Remove tag gives you new object', () {
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime nowPlusHour = now.add(new Duration(hours: 1)).toUtc();
+
+    final Tag tag = new Tag('Stuff', id: 1);
+    final Task task = new Task(
+        "some title",
+        "some description",
+        now,
+        nowPlusHour,
+        tags: new List.unmodifiable([tag]));
+
+    expect(task.tags, hasLength(1));
+
+    final Task another = task.removeTag(tag);
+
+    expect(task.id, isNull);
+    expect(another.id, isNull);
+    expect(task.title, another.title);
+    expect(task.description, another.description);
+    expect(task.startTime, another.startTime);
+    expect(task.endTime, another.endTime);
+    expect(task.hasTags, true);
+    expect(task.tags, hasLength(1));
+    expect(another.hasTags, false);
+  });
+
+  test('Equals works as expected', () {
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime nowPlusHour = now.add(new Duration(hours: 1)).toUtc();
+
+    final Task task = new Task(
+        "some title",
+        "some description",
+        now,
+        nowPlusHour);
+
+    final Task another = new Task(
+        "some title",
+        "some description",
+        now,
+        nowPlusHour);
+
+    expect(task == another, isTrue);
+
+    final Tag tag = new Tag('Stuff', id: 1);
+    final Task again = task.addTag(tag);
+
+    expect(task == again, isFalse);
   });
 
   // TODO(ralph) find a way to test path_provider.getApplicationDocumentsDirectory()

@@ -34,5 +34,16 @@ void main() {
     expect(tag.title, another.title);
   });
 
+  test('Equality works as expected', () {
+    final Tag tag = new Tag("some title");
+    final Tag another = new Tag("some title");
+
+    expect(tag == another, isTrue);
+
+    final Tag yetAgain = tag.copy(id: 1);
+
+    expect(tag == yetAgain, isFalse);
+  });
+
   // TODO(ralph) find a way to test TagsProvider path_provider.getApplicationDocumentsDirectory()
 }

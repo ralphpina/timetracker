@@ -27,12 +27,30 @@ class HomeState extends State<Home> {
   final _tasks = <Task>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
 
+  StreamSubscription<List<Task>> allTasksSubscription;
+
   @override
   void initState() {
     super.initState();
-    dbHelper.taskProvider
-        .then((provider) => provider.getAll())
-        .then((tasks) => setState(() => _tasks.addAll(tasks)));
+    initTasksSubscription();
+  }
+
+  void initTasksSubscription() async {
+    allTasksSubscription = await dbHelper.taskProvider
+        .then((provider) => provider.getAllTasksObservable())
+        .then((allTasksObservable) => allTasksObservable
+        .listen((tasks) {
+          setState(() {
+            _tasks.clear();
+            _tasks.addAll(tasks);
+          });
+    }));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    allTasksSubscription?.cancel();
   }
 
   @override
@@ -54,10 +72,9 @@ class HomeState extends State<Home> {
   }
 
   Future<Task> _addTask() => _taskAddOrEditDialog().then<Task>((newTask) {
-    dbHelper.taskProvider
-        .then((provider) => provider.insert(newTask))
-        .then((task) => setState(() => _tasks.add(task)));
-  });
+        dbHelper.taskProvider
+            .then((provider) => provider.insert(newTask));
+      });
 
   Widget _getTasksList() {
     return new ListView.builder(
@@ -70,24 +87,49 @@ class HomeState extends State<Home> {
   }
 
   Widget _buildRow(Task task) {
-    return new ListTile(
-      title: new Text(
-        task.title,
-        style: _biggerFont,
+    return new Container(
+      child: new Column(
+        children: <Widget>[
+          new ListTile(
+            title: new Text(
+              task.title,
+              style: _biggerFont,
+            ),
+            trailing: new PopupMenuButton<MenuItem>(
+              // overflow menu
+              onSelected: _onMenuSelection,
+              itemBuilder: (BuildContext context) {
+                return MenuAction.values.map((action) {
+                  return new PopupMenuItem<MenuItem>(
+                    value: new MenuItem(task, action),
+                    child: new Text(_menuItemName(action)),
+                  );
+                }).toList();
+              },
+            ),
+            onTap: () => _editItem(task),
+          ),
+          new Row(
+            children: <Widget>[
+              new Container(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: new Chip(
+                  label: new Text('Design'),
+                  onDeleted: () => _pushSaved,
+                ),
+              ),
+              new Container(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: new Chip(
+                  label: new Text('Product'),
+                  onDeleted: () => _pushSaved,
+                ),
+              ),
+              new IconButton(icon: new Icon(Icons.add), onPressed: _pushSaved),
+            ],
+          )
+        ],
       ),
-      trailing: new PopupMenuButton<MenuItem>(
-        // overflow menu
-        onSelected: _onMenuSelection,
-        itemBuilder: (BuildContext context) {
-          return MenuAction.values.map((action) {
-            return new PopupMenuItem<MenuItem>(
-              value: new MenuItem(task, action),
-              child: new Text(_menuItemName(action)),
-            );
-          }).toList();
-        },
-      ),
-      onTap: () => _editItem(task),
     );
   }
 
@@ -110,29 +152,55 @@ class HomeState extends State<Home> {
   void _editItem(Task task) {
     _taskAddOrEditDialog(task: task).then<Task>((updatedTask) {
       dbHelper.taskProvider
-          .then((provider) => provider.update(updatedTask))
-          .then((ignore) => setState(() {
-        for (int i = 0; i < _tasks.length; i++) {
-          if (_tasks[i].id == updatedTask.id) {
-            _tasks[i] = updatedTask;
-            break;
-          }
-        }
-      }));
+          .then((provider) {
+            if (updatedTask != null) {
+              provider.update(updatedTask);
+            }
+      });
     });
   }
 
   Future<void> _deleteItem(int taskId) {
     return dbHelper.taskProvider
-        .then((provider) => provider.delete(taskId))
-        .then((ignore /* num rows affected, always 1 */) =>
-            setState(() => _tasks.removeWhere((task) => task.id == taskId)));
+        .then((provider) => provider.delete(taskId));
   }
 
   Future<Task> _taskAddOrEditDialog({Task task}) async {
     return showDialog<Task>(
       context: context,
       child: new AddOrEditTaskDialog(task),
+    );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      new MaterialPageRoute(
+        builder: (context) {
+          final tiles = ['some', 'other'].map(
+            (title) {
+              return new ListTile(
+                title: new Text(
+                  title,
+                  style: _biggerFont,
+                ),
+              );
+            },
+          );
+          final divided = ListTile
+              .divideTiles(
+                context: context,
+                tiles: tiles,
+              )
+              .toList();
+
+          return new Scaffold(
+            appBar: new AppBar(
+              title: new Text('Saved Suggestions'),
+            ),
+            body: new ListView(children: divided),
+          );
+        },
+      ),
     );
   }
 }

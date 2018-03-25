@@ -20,6 +20,19 @@ class Tag {
       new Tag(map[tagsColumnTitle], id: map[tagsColumnId]);
 
   Tag copy({int id}) => new Tag(this.title, id: id);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Tag &&
+              runtimeType == other.runtimeType &&
+              id == other.id &&
+              title == other.title;
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      title.hashCode;
 }
 
 class TagsProvider {
