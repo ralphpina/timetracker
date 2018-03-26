@@ -21,6 +21,11 @@ Future<TasksProvider> get taskProvider async {
   return _tasksProvider;
 }
 
+Future<TagsProvider> get tagProvider async {
+  await _initDb();
+  return _tagsProvider;
+}
+
 Future<Null> _initDb() async {
   if (_db == null) {
     debugPrint("Initing DB");
@@ -47,23 +52,25 @@ Future<Database> openDb(String dbPath) async {
   return await openDatabase(path, version: 1,
       onCreate: (Database db, int version) async {
         await db.execute('''
-            create table $tagsTable ( 
-            $tagsColumnId integer primary key autoincrement, 
-            $tagsColumnTitle text not null)
+            CREATE TABLE $tagsTable ( 
+            $tagsColumnId INTEGER PRIMARY KEY AUTOINCREMENT, 
+            $tagsColumnTitle TEXT NOT NULL)
             ''');
         await db.execute('''
-            create table $tasksTable ( 
-            $tasksColumnId integer primary key autoincrement, 
-            $tasksColumnTitle text not null,
-            $tasksColumnDescription text,
-            $tasksColumnStartTime text not null,
-            $tasksColumnEndTime text not null)
+            CREATE TABLE $tasksTable ( 
+            $tasksColumnId INTEGER PRIMARY KEY AUTOINCREMENT, 
+            $tasksColumnTitle TEXT NOT NULL,
+            $tasksColumnDescription TEXT,
+            $tasksColumnStartTime TEXT NOT NULL,
+            $tasksColumnEndTime TEXT NOT NULL)
             ''');
         await db.execute('''
-            create table $tasksTagsTable ( 
-            $tasksTagsColumnId integer primary key autoincrement, 
-            $tasksTagsColumnTaskId text not null,
-            $tasksTagsColumnTagId text not null)
+            CREATE TABLE $tasksTagsTable ( 
+            $tasksTagsColumnId INTEGER PRIMARY KEY AUTOINCREMENT, 
+            $tasksTagsColumnTaskId INTEGER,
+            $tasksTagsColumnTagId INTEGER),
+            FOREIGN KEY(tasksTagsColumnTaskId) REFERENCES $tasksTable($tasksColumnId) ON DELETE CASCADE,
+            FOREIGN KEY(tasksTagsColumnTagId) REFERENCES $tagsTable($tagsColumnId) ON DELETE CASCADE
             ''');
       });
 }

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
 import 'database_helper.dart' as dbHelper;
+import 'design_specs.dart';
+import 'tag_selection.dart';
 import 'tasks.dart';
 import 'tasks_dialog.dart';
 
@@ -25,17 +27,16 @@ class Home extends StatefulWidget {
 
 class HomeState extends State<Home> {
   final _tasks = <Task>[];
-  final _biggerFont = const TextStyle(fontSize: 18.0);
 
   StreamSubscription<List<Task>> allTasksSubscription;
 
   @override
   void initState() {
     super.initState();
-    initTasksSubscription();
+    _initTasksSubscription();
   }
 
-  void initTasksSubscription() async {
+  void _initTasksSubscription() async {
     allTasksSubscription = await dbHelper.taskProvider
         .then((provider) => provider.getAllTasksObservable())
         .then((allTasksObservable) => allTasksObservable
@@ -58,9 +59,6 @@ class HomeState extends State<Home> {
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Time Tracker'),
-        actions: <Widget>[
-          new IconButton(icon: new Icon(Icons.list), onPressed: null)
-        ],
       ),
       body: _getTasksList(),
       floatingActionButton: new FloatingActionButton(
@@ -93,7 +91,7 @@ class HomeState extends State<Home> {
           new ListTile(
             title: new Text(
               task.title,
-              style: _biggerFont,
+              style: biggerFont,
             ),
             trailing: new PopupMenuButton<MenuItem>(
               // overflow menu
@@ -115,17 +113,17 @@ class HomeState extends State<Home> {
                 padding: const EdgeInsets.only(right: 12.0),
                 child: new Chip(
                   label: new Text('Design'),
-                  onDeleted: () => _pushSaved,
+                  onDeleted: () => null,
                 ),
               ),
               new Container(
                 padding: const EdgeInsets.only(right: 12.0),
                 child: new Chip(
                   label: new Text('Product'),
-                  onDeleted: () => _pushSaved,
+                  onDeleted: () => null,
                 ),
               ),
-              new IconButton(icon: new Icon(Icons.add), onPressed: _pushSaved),
+              new IconButton(icon: new Icon(Icons.add), onPressed: () => _manageTagsForTask(task.id)),
             ],
           )
         ],
@@ -172,34 +170,10 @@ class HomeState extends State<Home> {
     );
   }
 
-  void _pushSaved() {
+  void _manageTagsForTask(int tagId) {
     Navigator.of(context).push(
       new MaterialPageRoute(
-        builder: (context) {
-          final tiles = ['some', 'other'].map(
-            (title) {
-              return new ListTile(
-                title: new Text(
-                  title,
-                  style: _biggerFont,
-                ),
-              );
-            },
-          );
-          final divided = ListTile
-              .divideTiles(
-                context: context,
-                tiles: tiles,
-              )
-              .toList();
-
-          return new Scaffold(
-            appBar: new AppBar(
-              title: new Text('Saved Suggestions'),
-            ),
-            body: new ListView(children: divided),
-          );
-        },
+        builder: (context) => new TagSelection(tagId),
       ),
     );
   }

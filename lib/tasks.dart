@@ -20,6 +20,9 @@ const String tasksTagsColumnId = "_id";
 const String tasksTagsColumnTaskId = "task_id";
 const String tasksTagsColumnTagId = "tag_id";
 
+Iterable<Tag> tagsListFromMaps(List<Map> tagMap) =>
+    tagMap.map((map) => Tag.fromMap(map));
+
 @immutable
 class Task {
   Task(this.title, this.description, this.startTime, this.endTime,
@@ -47,7 +50,7 @@ class Task {
       };
 
   static Task fromMap(Map map, List<Map> tagMap) {
-    final tags = tagMap.map((map) => Tag.fromMap(map));
+    final Iterable<Tag> tags = tagsListFromMaps(tagMap);
     return new Task(
         map[tasksColumnTitle],
         map[tasksColumnDescription],
@@ -107,37 +110,16 @@ class TasksProvider {
   // TODO implement map for specific tasks
 //  BehaviorSubject<Map<int, Task>> taskBehaviorSubject;
 
+  final Map<int, BehaviorSubject<List<Tag>>> tagsForTaskBehaviorSubjectMap =
+      <int, BehaviorSubject<List<Tag>>>{};
+
+  // ===== tasks ===============================================================
+
   Future<Task> insert(Task task) async {
     final int id = await db.insert(tasksTable, task.toMap());
     // update listeners
     _broadcastAllTasks();
     return task.copy(id: id);
-  }
-
-  Future<Task> get(int id) async {
-    final List<Map> maps = await db.query(tasksTable,
-        columns: [
-          tasksColumnId,
-          tasksColumnTitle,
-          tasksColumnDescription,
-          tasksColumnStartTime,
-          tasksColumnEndTime
-        ],
-        where: "$tasksColumnId = ?",
-        whereArgs: [id]);
-    if (maps.length > 0) {
-      final List<Map> tags = await _getTags(maps.first[tasksColumnId]);
-      return Task.fromMap(maps.first, tags);
-    }
-    return null;
-  }
-
-  Observable<List<Task>> getAllTasksObservable() {
-    if (tasksBehaviorSubject == null) {
-      tasksBehaviorSubject = new BehaviorSubject<List<Task>>();
-      _broadcastAllTasks();
-    }
-    return tasksBehaviorSubject.observable;
   }
 
   Future<int> delete(int id) async {
@@ -154,16 +136,43 @@ class TasksProvider {
     return idAffected;
   }
 
-  // ===== internal ============================================================
+  Observable<List<Task>> getAllTasksObservable() {
+    if (tasksBehaviorSubject == null) {
+      tasksBehaviorSubject = new BehaviorSubject<List<Task>>();
+      _broadcastAllTasks();
+    }
+    return tasksBehaviorSubject.observable;
+  }
+
+  // TODO return an Observable with task
+//  Future<Task> get(int id) async {
+//    final List<Map> maps = await db.query(tasksTable,
+//        columns: [
+//          tasksColumnId,
+//          tasksColumnTitle,
+//          tasksColumnDescription,
+//          tasksColumnStartTime,
+//          tasksColumnEndTime
+//        ],
+//        where: "$tasksColumnId = ?",
+//        whereArgs: [id]);
+//    if (maps.length > 0) {
+//      final List<Map> tags = await _getTags(maps.first[tasksColumnId]);
+//      return Task.fromMap(maps.first, tags);
+//    }
+//    return null;
+//  }
+
+  // ===== tasks internal ======================================================
 
   void _broadcastAllTasks() {
     // is anyone listening?
     if (tasksBehaviorSubject != null) {
-      _getAll().then((tasks) => tasksBehaviorSubject.add(tasks));
+      _getAllTasks().then((tasks) => tasksBehaviorSubject.add(tasks));
     }
   }
 
-  Future<List<Task>> _getAll() async {
+  Future<List<Task>> _getAllTasks() async {
     final List<Map> maps = await db.query(tasksTable, columns: [
       tasksColumnId,
       tasksColumnTitle,
@@ -174,54 +183,73 @@ class TasksProvider {
     if (maps.length > 0) {
       final List<Task> tasks = <Task>[];
       for (Map map in maps) {
-        final List<Map> tags = await _getTags(maps.first[tasksColumnId]);
+        final List<Map> tags = await _getTagsInTask(maps.first[tasksColumnId]);
         tasks.add(Task.fromMap(map, tags));
       }
       return tasks;
     }
-    return null;
+    return [];
   }
 
   // ===== tags ================================================================
 
-  Future<Task> addTag(Task task, Tag tag) async {
-    if (task.id == null || tag.id == null) {
+  Future<void> addTag(int taskId, Tag tag) async {
+    if (taskId == null || tag.id == null) {
       throw new NoModelIdError(
-          'Task or Tag do not have an id. task.id = ${task.id} tag.id = ${tag
+          'Task or Tag do not have an id. task.id = $taskId tag.id = ${tag
               .id}');
     }
     await db.insert(tasksTagsTable, {
-      tasksTagsColumnTaskId: task.id,
+      tasksTagsColumnTaskId: taskId,
       tasksTagsColumnTagId: tag.id,
     });
-    return task.addTag(tag);
+    // broadcast change
+    _broadcastAllTasks();
+    _broadcastAllTagsForTask(taskId);
   }
 
-  Future<Task> removeTag(Task task, Tag tag) async {
-    if (task.id == null || tag.id == null) {
+  Future<void> removeTag(int taskId, Tag tag) async {
+    if (taskId == null || tag.id == null) {
       throw new NoModelIdError(
-          'Task or Tag do not have an id. task.id = ${task.id} tag.id = ${tag
+          'Task or Tag do not have an id. task.id = $taskId tag.id = ${tag
               .id}');
     }
     await db.delete(tasksTagsTable,
         where: '$tasksTagsColumnTaskId = ? AND $tasksTagsColumnTagId = ?',
-        whereArgs: [task.id, tag.id]);
-    return task.removeTag(tag);
+        whereArgs: [taskId, tag.id]);
+    // broadcast change
+    _broadcastAllTasks();
+    _broadcastAllTagsForTask(taskId);
   }
 
-  Future<List<Map>> _getTags(int taskId) async {
-    try {
-      final List<Map> tags = await db.rawQuery(
-          'SELECT $tagsColumnId, $tagsColumnTitle '
-          'FROM $tagsTable '
-          'INNER JOIN $tasksTagsTable '
-          'ON $tasksTagsTable.$tasksTagsColumnTagId = $tagsTable.$tagsColumnId '
-          'WHERE $tasksTagsTable.$tasksTagsColumnTaskId = $taskId');
-      if (tags.length > 0) {
-        return tags;
-      }
-    } on DatabaseException {
-      // noop if there's no tags for this tag, it will throw
+  Observable<List<Tag>> getAllTagsForTaskObservable(int taskId) {
+    if (tagsForTaskBehaviorSubjectMap[taskId] == null) {
+      tagsForTaskBehaviorSubjectMap[taskId] = new BehaviorSubject<List<Tag>>();
+      _broadcastAllTagsForTask(taskId);
+    }
+    return tagsForTaskBehaviorSubjectMap[taskId].observable;
+  }
+
+  // ===== tags internal  ======================================================
+
+  void _broadcastAllTagsForTask(int taskId) {
+    // is anyone listening?
+    if (tagsForTaskBehaviorSubjectMap[taskId] != null) {
+      _getTagsInTask(taskId).then((tagMap) => tagsListFromMaps(tagMap)).then((tags) =>
+          tagsForTaskBehaviorSubjectMap[taskId]
+              .add(new List.unmodifiable(tags)));
+    }
+  }
+
+  Future<List<Map>> _getTagsInTask(int taskId) async {
+    final List<Map> tags = await db.rawQuery(
+        'SELECT $tagsTable.$tagsColumnId, $tagsTable.$tagsColumnTitle '
+        'FROM $tagsTable '
+        'INNER JOIN $tasksTagsTable '
+        'ON $tasksTagsTable.$tasksTagsColumnTagId = $tagsTable.$tagsColumnId '
+        'WHERE $tasksTagsTable.$tasksTagsColumnTaskId = $taskId');
+    if (tags.length > 0) {
+      return tags;
     }
     return [];
   }
