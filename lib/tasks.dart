@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:meta/meta.dart';
-import 'package:rxdart/rxdart.dart';
-import 'package:rxdart/subjects.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'tags.dart';
@@ -14,19 +12,9 @@ const String tasksColumnDescription = "description";
 const String tasksColumnStartTime = "start_time";
 const String tasksColumnEndTime = "end_time";
 
-// tasks_tags table
-const String tasksTagsTable = "tasks_tags";
-const String tasksTagsColumnId = "_id";
-const String tasksTagsColumnTaskId = "task_id";
-const String tasksTagsColumnTagId = "tag_id";
-
-Iterable<Tag> tagsListFromMaps(List<Map> tagMap) =>
-    tagMap.map((map) => Tag.fromMap(map));
-
 @immutable
 class Task {
-  Task(this.title, this.description, this.startTime, this.endTime,
-      {this.id, this.tags});
+  Task(this.title, this.description, this.startTime, this.endTime, {this.id});
 
   final int id;
   final String title;
@@ -34,12 +22,8 @@ class Task {
   final DateTime startTime;
   final DateTime endTime;
 
-  final List<Tag> tags;
-
   // not persisted, instead calculated at construction
   Duration get duration => endTime.difference(startTime);
-
-  bool get hasTags => tags != null && tags.isNotEmpty;
 
   Map<String, dynamic> toMap() => {
         tasksColumnId: id,
@@ -49,34 +33,18 @@ class Task {
         tasksColumnEndTime: endTime.toIso8601String(),
       };
 
-  static Task fromMap(Map map, List<Map> tagMap) {
-    final Iterable<Tag> tags = tagsListFromMaps(tagMap);
+  static Task fromMap(Map map) {
     return new Task(
         map[tasksColumnTitle],
         map[tasksColumnDescription],
         DateTime.parse(map[tasksColumnStartTime]).toUtc(),
         DateTime.parse(map[tasksColumnEndTime]).toUtc(),
-        id: map[tasksColumnId],
-        tags: new List.unmodifiable(tags));
+        id: map[tasksColumnId]);
   }
 
   Task copy({int id}) =>
       new Task(this.title, this.description, this.startTime, this.endTime,
-          id: id, tags: this.tags);
-
-  Task addTag(Tag tag) {
-    final List<Tag> list = this.tags == null ? [] : new List.from(this.tags);
-    list.add(tag);
-    return new Task(this.title, this.description, this.startTime, this.endTime,
-        id: this.id, tags: new List.unmodifiable(list));
-  }
-
-  Task removeTag(Tag tag) {
-    final List<Tag> list = new List.from(this.tags);
-    list.removeWhere((current) => current.id == tag.id);
-    return new Task(this.title, this.description, this.startTime, this.endTime,
-        id: this.id, tags: new List.unmodifiable(list));
-  }
+          id: id);
 
   @override
   bool operator ==(Object other) =>
@@ -87,8 +55,7 @@ class Task {
           title == other.title &&
           description == other.description &&
           startTime == other.startTime &&
-          endTime == other.endTime &&
-          tags == other.tags;
+          endTime == other.endTime;
 
   @override
   int get hashCode =>
@@ -96,56 +63,52 @@ class Task {
       title.hashCode ^
       description.hashCode ^
       startTime.hashCode ^
-      endTime.hashCode ^
-      tags.hashCode;
+      endTime.hashCode;
 }
 
-class TasksProvider {
-  TasksProvider(this.db);
+abstract class TasksProvider {
+  Future<Task> insert(Task task);
+
+  Future<int> delete(int id);
+
+  Future<int> update(Task task);
+
+  Future<List<Task>> getAllTasks();
+}
+
+class TasksProviderImpl implements TasksProvider {
+  TasksProviderImpl(this.db);
 
   final Database db;
 
-  BehaviorSubject<List<Task>> tasksBehaviorSubject;
+  @override
+  Future<Task> insert(Task task) async =>
+      db.insert(tasksTable, task.toMap()).then((id) => task.copy(id: id));
 
-  // TODO implement map for specific tasks
-//  BehaviorSubject<Map<int, Task>> taskBehaviorSubject;
+  @override
+  Future<int> delete(int id) async =>
+      db.delete(tasksTable, where: "$tasksColumnId = ?", whereArgs: [id]);
 
-  final Map<int, BehaviorSubject<List<Tag>>> tagsForTaskBehaviorSubjectMap =
-      <int, BehaviorSubject<List<Tag>>>{};
+  @override
+  Future<int> update(Task task) async => db.update(tasksTable, task.toMap(),
+      where: "$tasksColumnId = ?", whereArgs: [task.id]);
 
-  // ===== tasks ===============================================================
+  @override
+  Future<List<Task>> getAllTasks() async => db.query(tasksTable, columns: [
+        tasksColumnId,
+        tasksColumnTitle,
+        tasksColumnDescription,
+        tasksColumnStartTime,
+        tasksColumnEndTime
+      ]).then((maps) {
+        if (maps.length > 0) {
+          return new List.unmodifiable(maps.map((map) => Task.fromMap(map)));
+        }
+        return new List.unmodifiable([]);
+      });
 
-  Future<Task> insert(Task task) async {
-    final int id = await db.insert(tasksTable, task.toMap());
-    // update listeners
-    _broadcastAllTasks();
-    return task.copy(id: id);
-  }
-
-  Future<int> delete(int id) async {
-    final int idAffected = await db
-        .delete(tasksTable, where: "$tasksColumnId = ?", whereArgs: [id]);
-    _broadcastAllTasks();
-    return idAffected;
-  }
-
-  Future<int> update(Task task) async {
-    final int idAffected = await db.update(tasksTable, task.toMap(),
-        where: "$tasksColumnId = ?", whereArgs: [task.id]);
-    _broadcastAllTasks();
-    return idAffected;
-  }
-
-  Observable<List<Task>> getAllTasksObservable() {
-    if (tasksBehaviorSubject == null) {
-      tasksBehaviorSubject = new BehaviorSubject<List<Task>>();
-      _broadcastAllTasks();
-    }
-    return tasksBehaviorSubject.observable;
-  }
-
-  // TODO return an Observable with task
-//  Future<Task> get(int id) async {
+// TODO return an Observable with task
+//  Future<Task> getTask(int id) async {
 //    final List<Map> maps = await db.query(tasksTable,
 //        columns: [
 //          tasksColumnId,
@@ -157,108 +120,8 @@ class TasksProvider {
 //        where: "$tasksColumnId = ?",
 //        whereArgs: [id]);
 //    if (maps.length > 0) {
-//      final List<Map> tags = await _getTags(maps.first[tasksColumnId]);
-//      return Task.fromMap(maps.first, tags);
+//      return Task.fromMap(maps.first);
 //    }
 //    return null;
 //  }
-
-  // ===== tasks internal ======================================================
-
-  void _broadcastAllTasks() {
-    // is anyone listening?
-    if (tasksBehaviorSubject != null) {
-      _getAllTasks().then((tasks) => tasksBehaviorSubject.add(tasks));
-    }
-  }
-
-  Future<List<Task>> _getAllTasks() async {
-    final List<Map> maps = await db.query(tasksTable, columns: [
-      tasksColumnId,
-      tasksColumnTitle,
-      tasksColumnDescription,
-      tasksColumnStartTime,
-      tasksColumnEndTime
-    ]);
-    if (maps.length > 0) {
-      final List<Task> tasks = <Task>[];
-      for (Map map in maps) {
-        final List<Map> tags = await _getTagsInTask(maps.first[tasksColumnId]);
-        tasks.add(Task.fromMap(map, tags));
-      }
-      return tasks;
-    }
-    return [];
-  }
-
-  // ===== tags ================================================================
-
-  Future<void> addTag(int taskId, Tag tag) async {
-    if (taskId == null || tag.id == null) {
-      throw new NoModelIdError(
-          'Task or Tag do not have an id. task.id = $taskId tag.id = ${tag
-              .id}');
-    }
-    await db.insert(tasksTagsTable, {
-      tasksTagsColumnTaskId: taskId,
-      tasksTagsColumnTagId: tag.id,
-    });
-    // broadcast change
-    _broadcastAllTasks();
-    _broadcastAllTagsForTask(taskId);
-  }
-
-  Future<void> removeTag(int taskId, Tag tag) async {
-    if (taskId == null || tag.id == null) {
-      throw new NoModelIdError(
-          'Task or Tag do not have an id. task.id = $taskId tag.id = ${tag
-              .id}');
-    }
-    await db.delete(tasksTagsTable,
-        where: '$tasksTagsColumnTaskId = ? AND $tasksTagsColumnTagId = ?',
-        whereArgs: [taskId, tag.id]);
-    // broadcast change
-    _broadcastAllTasks();
-    _broadcastAllTagsForTask(taskId);
-  }
-
-  Observable<List<Tag>> getAllTagsForTaskObservable(int taskId) {
-    if (tagsForTaskBehaviorSubjectMap[taskId] == null) {
-      tagsForTaskBehaviorSubjectMap[taskId] = new BehaviorSubject<List<Tag>>();
-      _broadcastAllTagsForTask(taskId);
-    }
-    return tagsForTaskBehaviorSubjectMap[taskId].observable;
-  }
-
-  // ===== tags internal  ======================================================
-
-  void _broadcastAllTagsForTask(int taskId) {
-    // is anyone listening?
-    if (tagsForTaskBehaviorSubjectMap[taskId] != null) {
-      _getTagsInTask(taskId).then((tagMap) => tagsListFromMaps(tagMap)).then((tags) =>
-          tagsForTaskBehaviorSubjectMap[taskId]
-              .add(new List.unmodifiable(tags)));
-    }
-  }
-
-  Future<List<Map>> _getTagsInTask(int taskId) async {
-    final List<Map> tags = await db.rawQuery(
-        'SELECT $tagsTable.$tagsColumnId, $tagsTable.$tagsColumnTitle '
-        'FROM $tagsTable '
-        'INNER JOIN $tasksTagsTable '
-        'ON $tasksTagsTable.$tasksTagsColumnTagId = $tagsTable.$tagsColumnId '
-        'WHERE $tasksTagsTable.$tasksTagsColumnTaskId = $taskId');
-    if (tags.length > 0) {
-      return tags;
-    }
-    return [];
-  }
-}
-
-class NoModelIdError extends Error {
-  final Object message;
-
-  NoModelIdError([this.message]);
-
-  String toString() => "NoModelIdError: $message";
 }

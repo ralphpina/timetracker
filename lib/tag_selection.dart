@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 
-import 'database_helper.dart' as dbHelper;
+import 'data_interactor.dart';
 import 'design_specs.dart';
 import 'tags.dart';
 import 'tags_dialog.dart';
+import 'ui_elements.dart';
 
 class TagSelection extends StatefulWidget {
   TagSelection(this._taskId);
@@ -35,7 +35,7 @@ class TagSelectionState extends State<TagSelection> {
   }
 
   void _initTagsSubscription() async {
-    tagsInTaskSubscription = await _getTagsForTaskObservable()
+    tagsInTaskSubscription = await getAllTagsForTaskObservable(_taskId)
         .then((observable) => observable.listen((tags) {
               setState(() {
                 _tagsInTask.clear();
@@ -44,7 +44,7 @@ class TagSelectionState extends State<TagSelection> {
               });
             }));
 
-    allTagsSubscription = await _getAllTagsObservable()
+    allTagsSubscription = await getAllTagsObservable()
         .then((observable) => observable.listen((tags) {
               setState(() {
                 _allTags.clear();
@@ -62,13 +62,6 @@ class TagSelectionState extends State<TagSelection> {
       }
     }
   }
-
-  Future<Observable<List<Tag>>> _getTagsForTaskObservable() =>
-      dbHelper.taskProvider
-          .then((provider) => provider.getAllTagsForTaskObservable(_taskId));
-
-  Future<Observable<List<Tag>>> _getAllTagsObservable() =>
-      dbHelper.tagProvider.then((provider) => provider.getAllTagsObservable());
 
   @override
   void dispose() {
@@ -90,12 +83,6 @@ class TagSelectionState extends State<TagSelection> {
         ),
       );
 
-  Future<Tag> _addTag() => _tagAddOrEditDialog().then<Tag>((newTag) {
-        dbHelper.tagProvider
-            .then((provider) => provider.insert(newTag))
-            .then((tag) => _addTagToTask(tag));
-      });
-
   Widget _getTagsList() => new ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: _tagsInTask.length + _otherTags.length,
@@ -113,27 +100,53 @@ class TagSelectionState extends State<TagSelection> {
           tag.title,
           style: biggerFont,
         ),
-        trailing: new Icon(
+        leading: new Icon(
           tagged ? Icons.check_circle : Icons.check_circle_outline,
           color: tagged ? Theme.of(context).accentColor : null,
         ),
+        trailing: new PopupMenuButton<MenuItem<Tag>>(
+          // overflow menu
+          onSelected: _onMenuSelection,
+          itemBuilder: (BuildContext context) {
+            return MenuAction.values.map((action) {
+              return new PopupMenuItem<MenuItem<Tag>>(
+                value: new MenuItem<Tag>(tag, action),
+                child: new Text(menuItemName(action)),
+              );
+            }).toList();
+          },
+        ),
         onTap: () {
           if (!tagged) {
-            _addTagToTask(tag);
+            addTagToTask(_taskId, tag.id);
           } else {
-            _removeTagFromTask(tag);
+            removeTagFromTask(_taskId, tag.id);
           }
         },
       );
+
+  Future<Tag> _addTag() => _tagAddOrEditDialog().then<Tag>((newTag) {
+        insertTag(newTag).then((tag) => addTagToTask(_taskId, tag.id));
+      });
+
+  void _onMenuSelection(MenuItem<Tag> menuItem) {
+    switch (menuItem.action) {
+      case MenuAction.Delete:
+        deleteTag(menuItem.item.id);
+        break;
+      case MenuAction.Edit:
+        _editItem(menuItem.item);
+        break;
+    }
+  }
+
+  void _editItem(Tag tag) =>
+      _tagAddOrEditDialog(tag: tag).then<Tag>((updatedTag) {
+        updateTag(updatedTag);
+      });
 
   Future<Tag> _tagAddOrEditDialog({Tag tag}) async => showDialog<Tag>(
         context: context,
         child: new AddOrEditTagDialog(tag),
       );
-
-  Future<void> _addTagToTask(Tag tag) => dbHelper.taskProvider
-      .then((taskProvider) => taskProvider.addTag(_taskId, tag));
-
-  Future<void> _removeTagFromTask(Tag tag) => dbHelper.taskProvider
-      .then((taskProvider) => taskProvider.removeTag(_taskId, tag));
 }

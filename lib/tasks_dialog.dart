@@ -119,7 +119,7 @@ class AddOrEditTaskState extends State<AddOrEditTaskDialog> {
                 _endTime.day,
                 _endTimeOfDay.hour,
                 _endTimeOfDay.minute);
-            final Task newOrUpdated = new Task(_title, _description, newStartTime, newEndTime, id: _task?.id ?? null, tags: _task?.tags ?? null);
+            final Task newOrUpdated = new Task(_title, _description, newStartTime, newEndTime, id: _task?.id ?? null);
             Navigator.of(context).pop(newOrUpdated);
           },
         ),
