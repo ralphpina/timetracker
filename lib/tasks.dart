@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'tags.dart';
-
 const String tasksTable = "tasks";
 const String tasksColumnId = "_id";
 const String tasksColumnTitle = "title";
