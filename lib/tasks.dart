@@ -62,6 +62,11 @@ class Task {
       description.hashCode ^
       startTime.hashCode ^
       endTime.hashCode;
+
+  @override
+  String toString() {
+    return 'Task{id: $id, title: $title, description: $description, startTime: $startTime, endTime: $endTime}';
+  }
 }
 
 abstract class TasksProvider {

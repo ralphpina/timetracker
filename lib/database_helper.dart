@@ -20,16 +20,24 @@ TagsProvider _tagsProvider;
 TasksProvider _tasksProvider;
 TagsInTaskProvider _tagsInTaskProvider;
 
-Future<DataInteractor> get dataInteractor async => await _initDb().then((_) => _dataInteractor);
+DataInteractor get dataInteractor {
+  if (_dataInteractor == null) {
+    _dataInteractor = new DataInteractorImpl();
+  }
+  return _dataInteractor;
+}
 
-Future<Null> _initDb() async {
+Future<TagsProvider> get tagsProvider async => await _initDb().then((_) => _tagsProvider);
+Future<TasksProvider> get tasksProvider async => await _initDb().then((_) => _tasksProvider);
+Future<TagsInTaskProvider> get tagsInTaskProvider async => await _initDb().then((_) => _tagsInTaskProvider);
+
+Future<void> _initDb() async {
   if (_db == null) {
     debugPrint("Initing DB");
     _db = await openDb(_DB_PATH);
     _tagsProvider = new TagsProviderImpl(_db);
     _tasksProvider = new TasksProviderImpl(_db);
     _tagsInTaskProvider = new TagsInTaskProviderImpl(_db);
-    _dataInteractor = new DataInteractorImpl(_tasksProvider, _tagsProvider, _tagsInTaskProvider);
   }
 }
 

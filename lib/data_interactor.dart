@@ -4,63 +4,60 @@ import 'package:rxdart/rxdart.dart';
 
 import 'database_helper.dart' as dbHelper;
 import 'tags.dart';
-import 'tags_in_task.dart';
 import 'tasks.dart';
 
-// ==== Syntatic Sugar to call the methods "statically" ========================
+class TagInTask {
+  TagInTask(this.tag, this.inTask);
+
+  final Tag tag;
+  final bool inTask;
+}
+
+// ==== Syntatic sugar to call the methods "statically" ========================
 
 // ===== Tasks =================================================================
 
-Future<Task> insertTask(Task task) =>
-    dbHelper.dataInteractor.then((interactor) => interactor.insertTask(task));
+void insertTask(Task task) => dbHelper.dataInteractor.insertTask(task);
 
-Future<void> deleteTask(int id) =>
-    dbHelper.dataInteractor.then((interactor) => interactor.deleteTask(id));
+void deleteTask(int id) => dbHelper.dataInteractor.deleteTask(id);
 
-Future<void> updateTask(Task task) =>
-    dbHelper.dataInteractor.then((interactor) {
-      if (task != null) {
-        interactor.updateTask(task);
-      }
-    });
+void updateTask(Task task) {
+  if (task != null) {
+    dbHelper.dataInteractor.updateTask(task);
+  }
+}
 
-Future<Observable<List<Task>>> getAllTasksObservable() =>
-    dbHelper.dataInteractor
-        .then((interactor) => interactor.getAllTasksObservable());
+Observable<List<Task>> getAllTasksObservable() =>
+    dbHelper.dataInteractor.getAllTasksObservable();
 
 // ===== Tags ==================================================================
 
-Future<Tag> insertTag(Tag tag) => dbHelper.dataInteractor
-    .then((dataInteractor) => dataInteractor.insertTag(tag));
+Future<Tag> insertTag(Tag tag) => dbHelper.dataInteractor.insertTag(tag);
 
-Future<void> deleteTag(int id) => dbHelper.dataInteractor
-    .then((dataInteractor) => dataInteractor.deleteTag(id));
+void deleteTag(int id) => dbHelper.dataInteractor.deleteTag(id);
 
-Future<void> updateTag(Tag tag) =>
-    dbHelper.dataInteractor.then((dataInteractor) {
-      if (tag != null) {
-        dataInteractor.updateTag(tag);
-      }
-    });
+void updateTag(Tag tag) {
+  if (tag != null) {
+    dbHelper.dataInteractor.updateTag(tag);
+  }
+}
 
-Future<Observable<List<Tag>>> getAllTagsObservable() => dbHelper.dataInteractor
-    .then((dataInteractor) => dataInteractor.getAllTagsObservable());
+Observable<List<Tag>> getAllTagsObservable() =>
+    dbHelper.dataInteractor.getAllTagsObservable();
 
 // ===== Tags In Tasks =========================================================
 
-Future<void> addTagToTask(int taskId, int tagId) => dbHelper.dataInteractor
-    .then((dataInteractor) => dataInteractor.addTagToTask(taskId, tagId));
+void addTagToTask(int taskId, int tagId) =>
+    dbHelper.dataInteractor.addTagToTask(taskId, tagId);
 
-Future<void> removeTagFromTask(int taskId, int tagId) => dbHelper.dataInteractor
-    .then((dataInteractor) => dataInteractor.removeTagFromTask(taskId, tagId));
+void removeTagFromTask(int taskId, int tagId) =>
+    dbHelper.dataInteractor.removeTagFromTask(taskId, tagId);
 
-Future<Observable<List<Tag>>> getAllTagsForTaskObservable(int taskId) =>
-    dbHelper.dataInteractor.then(
-        (dataInteractor) => dataInteractor.getAllTagsForTaskObservable(taskId));
+Observable<List<TagInTask>> getAllTagsForTaskObservable(int taskId) =>
+    dbHelper.dataInteractor.getAllTagsForTaskObservable(taskId);
 
-Future<Observable<Map<int, List<Tag>>>> getAllTagsForAllTasksObservable() =>
-    dbHelper.dataInteractor.then(
-        (dataInteractor) => dataInteractor.getAllTagsForAllTasksObservable());
+Observable<Map<int, List<Tag>>> getAllTagsForAllTasksObservable() =>
+    dbHelper.dataInteractor.getAllTagsForAllTasksObservable();
 
 // ===== IMPLEMENTATION ========================================================
 
@@ -85,37 +82,33 @@ abstract class DataInteractor {
 
   Future<void> removeTagFromTask(int taskId, int tagId);
 
-  Observable<List<Tag>> getAllTagsForTaskObservable(int taskId);
+  Observable<List<TagInTask>> getAllTagsForTaskObservable(int taskId);
 
   Observable<Map<int, List<Tag>>> getAllTagsForAllTasksObservable();
 }
 
 class DataInteractorImpl implements DataInteractor {
-  DataInteractorImpl(
-      this._tasksProvider, this._tagsProvider, this._tagsInTasksProvider);
-
-  final TasksProvider _tasksProvider;
-  final TagsProvider _tagsProvider;
-  final TagsInTaskProvider _tagsInTasksProvider;
-
   BehaviorSubject<List<Task>> tasksBehaviorSubject;
   BehaviorSubject<List<Tag>> tagsBehaviorSubject;
   BehaviorSubject<Map<int, List<Tag>>> allTagsForAllTasksBehaviorSubjectMap;
-  final Map<int, BehaviorSubject<List<Tag>>> tagsForTaskBehaviorSubjectMap =
-      <int, BehaviorSubject<List<Tag>>>{};
+  final Map<int, BehaviorSubject<List<TagInTask>>>
+      tagsForTaskBehaviorSubjectMap = <int, BehaviorSubject<List<TagInTask>>>{};
 
   // ===== Tasks ===============================================================
 
   @override
   Future<Task> insertTask(Task task) async {
-    final Task newTask = await _tasksProvider.insert(task);
+    final Task newTask =
+        await dbHelper.tasksProvider.then((provider) => provider.insert(task));
     // tell UI about new tasks
     _broadcastAllTasks();
     return newTask;
   }
 
   @override
-  Future<void> deleteTask(int id) async => _tasksProvider.delete(id).then((_) {
+  Future<void> deleteTask(int id) async => await dbHelper.tasksProvider
+          .then((provider) => provider.delete(id))
+          .then((_) {
         _broadcastAllTasks();
         _broadcastAllTagsForTask(id);
         // a stale task id here might be OK. But to
@@ -124,13 +117,14 @@ class DataInteractorImpl implements DataInteractor {
       });
 
   @override
-  Future<void> updateTask(Task task) async =>
-      _tasksProvider.update(task).then((_) => _broadcastAllTasks());
+  Future<void> updateTask(Task task) async => await dbHelper.tasksProvider
+      .then((provider) => provider.update(task))
+      .then((_) => _broadcastAllTasks());
 
   @override
   Observable<List<Task>> getAllTasksObservable() {
     if (tasksBehaviorSubject == null) {
-      tasksBehaviorSubject = new BehaviorSubject<List<Task>>();
+      tasksBehaviorSubject = new BehaviorSubject<List<Task>>(seedValue: []);
       _broadcastAllTasks();
     }
     return tasksBehaviorSubject.observable;
@@ -139,8 +133,8 @@ class DataInteractorImpl implements DataInteractor {
   void _broadcastAllTasks() {
     // is anyone listening?
     if (tasksBehaviorSubject != null) {
-      _tasksProvider
-          .getAllTasks()
+      dbHelper.tasksProvider
+          .then((provider) => provider.getAllTasks())
           .then((tasks) => tasksBehaviorSubject.add(tasks));
     }
   }
@@ -149,13 +143,16 @@ class DataInteractorImpl implements DataInteractor {
 
   @override
   Future<Tag> insertTag(Tag tag) async {
-    final Tag newTag = await _tagsProvider.insert(tag);
+    final Tag newTag =
+        await dbHelper.tagsProvider.then((provider) => provider.insert(tag));
     _broadcastAllTags();
     return newTag;
   }
 
   @override
-  Future<void> deleteTag(int id) async => _tagsProvider.delete(id).then((_) {
+  Future<void> deleteTag(int id) async => await dbHelper.tagsProvider
+          .then((provider) => provider.delete(id))
+          .then((_) {
         _broadcastAllTags();
         // maybe we deleted a tag attached to a task. this would delete it from the task
         _broadcastAllTagsForTasks();
@@ -164,7 +161,9 @@ class DataInteractorImpl implements DataInteractor {
       });
 
   @override
-  Future<void> updateTag(Tag tag) async => _tagsProvider.update(tag).then((_) {
+  Future<void> updateTag(Tag tag) async => await dbHelper.tagsProvider
+          .then((provider) => provider.update(tag))
+          .then((_) {
         // broadcast any changes
         _broadcastAllTags();
         // maybe we deleted a tag attached to a task. this would delete it from the task
@@ -176,7 +175,7 @@ class DataInteractorImpl implements DataInteractor {
   @override
   Observable<List<Tag>> getAllTagsObservable() {
     if (tagsBehaviorSubject == null) {
-      tagsBehaviorSubject = new BehaviorSubject<List<Tag>>();
+      tagsBehaviorSubject = new BehaviorSubject<List<Tag>>(seedValue: []);
       // broadcast any changes
       _broadcastAllTags();
     }
@@ -186,8 +185,8 @@ class DataInteractorImpl implements DataInteractor {
   void _broadcastAllTags() {
     // is anyone listening?
     if (tagsBehaviorSubject != null) {
-      _tagsProvider
-          .getAllTags()
+      dbHelper.tagsProvider
+          .then((provider) => provider.getAllTags())
           .then((tasks) => tagsBehaviorSubject.add(tasks));
     }
   }
@@ -196,22 +195,27 @@ class DataInteractorImpl implements DataInteractor {
 
   @override
   Future<void> addTagToTask(int taskId, int tagId) async =>
-      _tagsInTasksProvider.addTag(taskId, tagId).then((_) {
+      await dbHelper.tagsInTaskProvider
+          .then((provider) => provider.addTag(taskId, tagId))
+          .then((_) {
         _broadcastAllTagsForTask(taskId);
         _broadcastAllTagsForAllTasks();
       });
 
   @override
   Future<void> removeTagFromTask(int taskId, int tagId) async =>
-      _tagsInTasksProvider.removeTag(taskId, tagId).then((_) {
+      await dbHelper.tagsInTaskProvider
+          .then((provider) => provider.removeTag(taskId, tagId))
+          .then((_) {
         _broadcastAllTagsForTask(taskId);
         _broadcastAllTagsForAllTasks();
       });
 
   @override
-  Observable<List<Tag>> getAllTagsForTaskObservable(int taskId) {
+  Observable<List<TagInTask>> getAllTagsForTaskObservable(int taskId) {
     if (tagsForTaskBehaviorSubjectMap[taskId] == null) {
-      tagsForTaskBehaviorSubjectMap[taskId] = new BehaviorSubject<List<Tag>>();
+      tagsForTaskBehaviorSubjectMap[taskId] =
+          new BehaviorSubject<List<TagInTask>>(seedValue: []);
       _broadcastAllTagsForTask(taskId);
     }
     return tagsForTaskBehaviorSubjectMap[taskId].observable;
@@ -221,7 +225,7 @@ class DataInteractorImpl implements DataInteractor {
   Observable<Map<int, List<Tag>>> getAllTagsForAllTasksObservable() {
     if (allTagsForAllTasksBehaviorSubjectMap == null) {
       allTagsForAllTasksBehaviorSubjectMap =
-          new BehaviorSubject<Map<int, List<Tag>>>();
+          new BehaviorSubject<Map<int, List<Tag>>>(seedValue: {});
       // broadcast any changes
       _broadcastAllTagsForAllTasks();
     }
@@ -236,16 +240,28 @@ class DataInteractorImpl implements DataInteractor {
   void _broadcastAllTagsForTask(int taskId) {
     // is anyone listening?
     if (tagsForTaskBehaviorSubjectMap[taskId] != null) {
-      _tagsInTasksProvider.getTagsInTask(taskId).then((tags) =>
-          tagsForTaskBehaviorSubjectMap[taskId]
-              .add(new List.unmodifiable(tags)));
+      dbHelper.tagsInTaskProvider.then((provider) async {
+        final List<TagInTask> tagsInTaskAndOthers = <TagInTask>[];
+        final List<Tag> tagsInTask = await provider.getTagsInTask(taskId);
+        for (Tag tag in tagsInTask) {
+          tagsInTaskAndOthers.add(new TagInTask(tag, true));
+        }
+        final List<Tag> allTags = await dbHelper.tagsProvider
+            .then((provider) => provider.getAllTags());
+        for (Tag tag in allTags) {
+          if (!tagsInTask.contains(tag))
+            tagsInTaskAndOthers.add(new TagInTask(tag, false));
+        }
+        tagsForTaskBehaviorSubjectMap[taskId]
+            .add(new List.unmodifiable(tagsInTaskAndOthers));
+      });
     }
   }
 
   void _broadcastAllTagsForAllTasks() {
     if (allTagsForAllTasksBehaviorSubjectMap != null) {
-      _tagsInTasksProvider
-          .getTagsInAllTasks()
+      dbHelper.tagsInTaskProvider
+          .then((provider) => provider.getTagsInAllTasks())
           .then((tagMap) => allTagsForAllTasksBehaviorSubjectMap.add(tagMap));
     }
   }

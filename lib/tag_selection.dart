@@ -19,56 +19,7 @@ class TagSelection extends StatefulWidget {
 
 class TagSelectionState extends State<TagSelection> {
   TagSelectionState(this._taskId);
-
   final int _taskId;
-  final _tagsInTask = <Tag>[];
-  final _otherTags = <Tag>[];
-  final _allTags = <Tag>[];
-
-  StreamSubscription<List<Tag>> tagsInTaskSubscription;
-  StreamSubscription<List<Tag>> allTagsSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _initTagsSubscription();
-  }
-
-  void _initTagsSubscription() async {
-    tagsInTaskSubscription = await getAllTagsForTaskObservable(_taskId)
-        .then((observable) => observable.listen((tags) {
-              setState(() {
-                _tagsInTask.clear();
-                _tagsInTask.addAll(tags);
-                _setupOtherTags();
-              });
-            }));
-
-    allTagsSubscription = await getAllTagsObservable()
-        .then((observable) => observable.listen((tags) {
-              setState(() {
-                _allTags.clear();
-                _allTags.addAll(tags);
-                _setupOtherTags();
-              });
-            }));
-  }
-
-  void _setupOtherTags() {
-    _otherTags.clear();
-    for (final Tag tag in _allTags) {
-      if (!_tagsInTask.contains(tag)) {
-        _otherTags.add(tag);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    tagsInTaskSubscription?.cancel();
-    allTagsSubscription?.cancel();
-  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -83,17 +34,17 @@ class TagSelectionState extends State<TagSelection> {
         ),
       );
 
-  Widget _getTagsList() => new ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: _tagsInTask.length + _otherTags.length,
-        itemBuilder: (context, i) {
-          if (i < _tagsInTask.length) {
-            return _buildRow(_tagsInTask[i], true);
-          } else {
-            return _buildRow(_otherTags[i - _tagsInTask.length], false);
-          }
-        },
-      );
+  Widget _getTagsList() => new StreamBuilder<List<TagInTask>>(
+      stream: getAllTagsForTaskObservable(_taskId).stream,
+      builder: (context, snapshot) {
+        return new ListView.builder(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: snapshot.hasData ? snapshot.data.length : 0,
+          itemBuilder: (context, i) {
+            return _buildRow(snapshot.data[i].tag, snapshot.data[i].inTask);
+          },
+        );
+      });
 
   Widget _buildRow(Tag tag, bool tagged) => new ListTile(
         title: new Text(
