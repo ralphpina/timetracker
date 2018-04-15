@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tags/tags.dart';
 
 import 'data_interactor.dart';
 import 'design_specs.dart';
-import 'tags.dart';
+import 'tags_provider_impl.dart';
 import 'tags_dialog.dart';
 import 'ui_elements.dart';
 
@@ -22,7 +23,7 @@ class TagSelectionState extends State<TagSelection> {
   final int _taskId;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => new Scaffold(
         appBar: new AppBar(
           title: new Text('Manage Tags'),
         ),

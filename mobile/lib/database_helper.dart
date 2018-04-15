@@ -6,11 +6,13 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:tags/tags.dart';
+import 'package:tasks/tasks.dart';
 
 import 'data_interactor.dart';
-import 'tags.dart';
+import 'tags_provider_impl.dart';
 import 'tags_in_task.dart';
-import 'tasks.dart';
+import 'tasks_provider_impl.dart';
 
 const String _DB_PATH = "timetracker.db";
 
@@ -76,9 +78,9 @@ Future<Database> openDb(String dbPath) async {
             CREATE TABLE $tasksTagsTable ( 
             $tasksTagsColumnId INTEGER PRIMARY KEY AUTOINCREMENT, 
             $tasksTagsColumnTaskId INTEGER,
-            $tasksTagsColumnTagId INTEGER),
-            FOREIGN KEY(tasksTagsColumnTaskId) REFERENCES $tasksTable($tasksColumnId) ON DELETE CASCADE,
-            FOREIGN KEY(tasksTagsColumnTagId) REFERENCES $tagsTable($tagsColumnId) ON DELETE CASCADE
+            $tasksTagsColumnTagId INTEGER,
+            FOREIGN KEY($tasksTagsColumnTaskId) REFERENCES $tasksTable($tasksColumnId) ON DELETE CASCADE,
+            FOREIGN KEY($tasksTagsColumnTagId) REFERENCES $tagsTable($tagsColumnId) ON DELETE CASCADE)
             ''');
       });
 }

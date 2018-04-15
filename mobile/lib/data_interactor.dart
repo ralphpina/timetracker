@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:rxdart/rxdart.dart';
+import 'package:tags/tags.dart';
+import 'package:tasks/tasks.dart';
 
 import 'database_helper.dart' as dbHelper;
-import 'tags.dart';
-import 'tasks.dart';
 
 class TagInTask {
   TagInTask(this.tag, this.inTask);

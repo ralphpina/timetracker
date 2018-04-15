@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:sqflite/sqflite.dart';
+import 'package:tags/tags.dart';
 
-import 'tags.dart';
+import 'tags_provider_impl.dart';
 
 Iterable<Tag> tagsListFromMaps(List<Map> tagMap) =>
-    tagMap.map((map) => Tag.fromMap(map));
+    tagMap.map((map) => fromMap(map));
 
 const String tasksTagsTable = "tasks_tags";
 const String tasksTagsColumnId = "_id";
@@ -78,10 +79,10 @@ class TagsInTaskProviderImpl implements TagsInTaskProvider {
         if (data.length > 0) {
           final Map<int, List<Tag>> tagMap = {};
           for (final row in data) {
-            if (tagMap[int.parse(row[tasksTagsColumnTaskId])] == null) {
-              tagMap[int.parse(row[tasksTagsColumnTaskId])] = <Tag>[];
+            if (tagMap[row[tasksTagsColumnTaskId]] == null) {
+              tagMap[row[tasksTagsColumnTaskId]] = <Tag>[];
             }
-            tagMap[int.parse(row[tasksTagsColumnTaskId])].add(Tag.fromMap(row));
+            tagMap[row[tasksTagsColumnTaskId]].add(fromMap(row));
           }
           return tagMap;
         }

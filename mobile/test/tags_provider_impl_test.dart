@@ -1,5 +1,6 @@
 import 'package:test/test.dart';
-import 'package:timetracker/tags.dart';
+import 'package:timetracker/tags_provider_impl.dart';
+import 'package:tags/tags.dart';
 
 void main() {
   test('Convert from a map', () {
@@ -8,7 +9,7 @@ void main() {
       tagsColumnTitle: "some title"
     };
 
-    final Tag tag = Tag.fromMap(map);
+    final Tag tag = fromMap(map);
 
     expect(tag.id, 2);
     expect(tag.title, "some title");
@@ -17,7 +18,7 @@ void main() {
   test('Convert to map', () {
     final Tag tag = new Tag("some title", id: 1);
 
-    final Map<String, dynamic> map = tag.toMap();
+    final Map<String, dynamic> map = toMap(tag);
 
     expect(map[tagsColumnId], 1);
     expect(map[tagsColumnTitle], "some title");

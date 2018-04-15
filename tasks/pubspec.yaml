@@ -1,0 +1,14 @@
+name: tasks
+description: A starting point for Dart libraries or applications.
+version: 0.0.1
+#homepage: https://www.example.com
+#author: ralphpina <ralph.pina@gmail.com>
+
+environment:
+  sdk: '>=2.0.0-dev.1.2 <2.0.0'
+
+dependencies:
+  meta: ^1.1.2
+
+dev_dependencies:
+  test: ^0.12.0

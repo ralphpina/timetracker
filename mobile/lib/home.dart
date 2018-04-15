@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tags/tags.dart';
+import 'package:tasks/tasks.dart';
 
 import 'data_interactor.dart';
 import 'design_specs.dart';
 import 'tag_selection.dart';
-import 'tags.dart';
-import 'tasks.dart';
 import 'tasks_dialog.dart';
 import 'ui_elements.dart';
 
@@ -71,7 +71,7 @@ class HomeState extends State<Home> {
         ),
       );
 
-  Widget _getTagsForTask(Task task) => StreamBuilder<Map<int, List<Tag>>>(
+  Widget _getTagsForTask(Task task) => new StreamBuilder<Map<int, List<Tag>>>(
         stream: getAllTagsForAllTasksObservable().stream,
         builder: (context, snapshot) {
           return new Row(
@@ -135,7 +135,7 @@ class HomeState extends State<Home> {
 
   Future<Task> _taskAddOrEditDialog({Task task}) async => showDialog<Task>(
         context: context,
-        child: new AddOrEditTaskDialog(task),
+        builder: (context) => new AddOrEditTaskDialog(task),
       );
 
   void _manageTagsForTask(int tagId) => Navigator.of(context).push(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tasks/tasks.dart';
 
 import 'date_time.dart';
-import 'tasks.dart';
 
 class AddOrEditTaskDialog extends StatefulWidget {
   AddOrEditTaskDialog(this._task);

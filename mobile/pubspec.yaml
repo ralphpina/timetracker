@@ -16,6 +16,11 @@ dependencies:
   intl: ^0.15.2
   rxdart: ^0.16.0+2
 
+  tags:
+    path: ../tags
+  tasks:
+    path: ../tasks
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

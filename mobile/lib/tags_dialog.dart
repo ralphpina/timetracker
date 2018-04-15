@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tags/tags.dart';
 
-import 'tags.dart';
+import 'tags_provider_impl.dart';
 
 class AddOrEditTagDialog extends StatefulWidget {
   AddOrEditTagDialog(this._tag);
