@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tasks/tasks.dart';
 
-import 'date_time.dart';
+import 'package:date_time_picker_mobile/date_time_picker.dart';
 
 class AddOrEditTaskDialog extends StatefulWidget {
   AddOrEditTaskDialog(this._task);
