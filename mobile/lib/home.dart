@@ -1,25 +1,26 @@
 import 'dart:async';
 
+import 'package:design_mobile/design_specs.dart';
 import 'package:flutter/material.dart';
 import 'package:tags/tags.dart';
+import 'package:tags_in_task_mobile/tag_selection.dart';
+import 'package:tags_in_task_mobile/tags_in_task_data_interactor_impl.dart';
 import 'package:tasks/tasks.dart';
-
-import 'data_interactor.dart';
-import 'design_specs.dart';
-import 'tag_selection.dart';
-import 'tasks_dialog.dart';
-import 'ui_elements.dart';
+import 'package:tasks_mobile/tasks_data_interactor_impl.dart';
+import 'package:tasks_mobile/tasks_dialog.dart';
+import 'package:timetracker/shared/strings.dart';
+import 'package:ui_elements_mobile/ui_elements.dart';
 
 class Home extends StatefulWidget {
   @override
-  createState() => new HomeState();
+  State<StatefulWidget> createState() => new HomeState();
 }
 
 class HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) => new Scaffold(
         appBar: new AppBar(
-          title: new Text('Time Tracker'),
+          title: new Text(app_name),
         ),
         body: _getTasksList(),
         floatingActionButton: new FloatingActionButton(

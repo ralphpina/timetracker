@@ -3,9 +3,9 @@ import 'package:tags/tags.dart';
 
 void main() {
   test('Copy gives you new object', () {
-    final tag = new Tag('some title');
+    const Tag tag = Tag('some title');
 
-    final another = tag.copy(id: 1);
+    final Tag another = tag.copy(id: 1);
 
     expect(tag.id, isNull);
     expect(another.id, 1);
@@ -13,8 +13,8 @@ void main() {
   });
 
   test('Equality works as expected', () {
-    final tag = new Tag('some title');
-    final another = new Tag('some title');
+    const Tag tag = Tag('some title');
+    const Tag another = Tag('some title');
 
     expect(tag == another, isTrue);
 

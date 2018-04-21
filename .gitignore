@@ -24,3 +24,4 @@ ios/.generated/
 packages
 .flutter-plugins
 /timetracker.iml
+*.iml

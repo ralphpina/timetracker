@@ -85,20 +85,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.14.1"
-  cupertino_icons:
-    dependency: "direct main"
-    description:
-      name: cupertino_icons
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.2"
-  database_mobile:
-    dependency: "direct main"
-    description:
-      path: "../database_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
   date_time_picker_mobile:
     dependency: transitive
     description:
@@ -107,7 +93,7 @@ packages:
     source: path
     version: "0.0.1"
   design_mobile:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../design_mobile"
       relative: true
@@ -299,7 +285,7 @@ packages:
     source: hosted
     version: "0.28.0"
   rxdart:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: rxdart
       url: "https://pub.dartlang.org"
@@ -365,7 +351,7 @@ packages:
       name: sqflite
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.8.6"
+    version: "0.8.7"
   stack_trace:
     dependency: transitive
     description:
@@ -402,16 +388,9 @@ packages:
     source: path
     version: "0.0.1"
   tags_in_task:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: "../tags_in_task"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_in_task_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tags_in_task_mobile"
       relative: true
     source: path
     version: "0.0.1"
@@ -423,30 +402,23 @@ packages:
     source: path
     version: "0.0.1"
   tags_mobile:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../tags_mobile"
       relative: true
     source: path
     version: "0.0.1"
   tags_repository_mobile:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: "../tags_repository_mobile"
       relative: true
     source: path
     version: "0.0.1"
   tasks:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: "../tasks"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tasks_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tasks_mobile"
       relative: true
     source: path
     version: "0.0.1"

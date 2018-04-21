@@ -29,13 +29,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.15.2+15"
-  base:
-    dependency: transitive
-    description:
-      path: "../base"
-      relative: true
-    source: path
-    version: "0.0.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -85,34 +78,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.14.1"
-  cupertino_icons:
-    dependency: "direct main"
-    description:
-      name: cupertino_icons
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.2"
-  database_mobile:
-    dependency: "direct main"
-    description:
-      path: "../database_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  date_time_picker_mobile:
-    dependency: transitive
-    description:
-      path: "../date_time_picker_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  design_mobile:
-    dependency: transitive
-    description:
-      path: "../design_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -165,13 +130,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.1"
-  intl:
-    dependency: transitive
-    description:
-      name: intl
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.15.6"
   io:
     dependency: transitive
     description:
@@ -263,13 +221,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.5.1"
-  path_provider:
-    dependency: transitive
-    description:
-      name: path_provider
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.4.0"
   plugin:
     dependency: transitive
     description:
@@ -298,13 +249,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.28.0"
-  rxdart:
-    dependency: "direct main"
-    description:
-      name: rxdart
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.16.6"
   shelf:
     dependency: transitive
     description:
@@ -359,13 +303,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.0"
-  sqflite:
-    dependency: transitive
-    description:
-      name: sqflite
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.8.6"
   stack_trace:
     dependency: transitive
     description:
@@ -387,76 +324,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.2"
-  synchronized:
-    dependency: transitive
-    description:
-      name: synchronized
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.4.0"
-  tags:
-    dependency: "direct main"
-    description:
-      path: "../tags"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_in_task:
-    dependency: "direct main"
-    description:
-      path: "../tags_in_task"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_in_task_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tags_in_task_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_in_task_repository_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tags_in_task_repository_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_mobile:
-    dependency: transitive
-    description:
-      path: "../tags_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tags_repository_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tags_repository_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tasks:
-    dependency: "direct main"
-    description:
-      path: "../tasks"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tasks_mobile:
-    dependency: "direct main"
-    description:
-      path: "../tasks_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
-  tasks_repository_mobile:
-    dependency: transitive
-    description:
-      path: "../tasks_repository_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
   term_glyph:
     dependency: transitive
     description:
@@ -478,13 +345,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.5"
-  ui_elements_mobile:
-    dependency: "direct main"
-    description:
-      path: "../ui_elements_mobile"
-      relative: true
-    source: path
-    version: "0.0.1"
   utf:
     dependency: transitive
     description:
@@ -521,5 +381,4 @@ packages:
     source: hosted
     version: "2.1.13"
 sdks:
-  dart: ">=2.0.0-dev.35 <=2.0.0-edge.0d5cf900b021bf5c9fa593ffa12b15bcd1cc5fe0"
-  flutter: ">=0.1.4 <2.0.0"
+  dart: ">=2.0.0-dev.23.0 <=2.0.0-edge.0d5cf900b021bf5c9fa593ffa12b15bcd1cc5fe0"
