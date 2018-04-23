@@ -18,7 +18,10 @@ class TimeTracker extends StatelessWidget {
   Widget build(BuildContext context) => new MaterialApp(
         title: app_name,
         theme: new ThemeData(
-          primaryColor: Colors.white,
+          primaryColor: Colors.blue,
+          buttonColor: Colors.blue,
+          buttonTheme: new ButtonThemeData(textTheme: ButtonTextTheme.primary),
+
         ),
         home: new Home(),
       );

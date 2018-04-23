@@ -43,7 +43,7 @@ class TagSelectionState extends State<TagSelection> {
       stream: getAllTagsForTaskObservable(_taskId).stream,
       builder: (context, snapshot) {
         return new ListView.builder(
-          padding: const EdgeInsets.all(16.0),
+          padding: normalPadding,
           itemCount: snapshot.hasData ? snapshot.data.length : 0,
           itemBuilder: (context, i) {
             return _buildRow(snapshot.data[i].tag, snapshot.data[i].inTask);

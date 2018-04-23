@@ -85,6 +85,13 @@ packages:
       relative: true
     source: path
     version: "0.0.1"
+  design_mobile:
+    dependency: "direct main"
+    description:
+      path: "../design_mobile"
+      relative: true
+    source: path
+    version: "0.0.1"
   flutter:
     dependency: "direct main"
     description: flutter

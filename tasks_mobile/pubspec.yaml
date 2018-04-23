@@ -10,6 +10,9 @@ dependencies:
 
   rxdart: ^0.16.6
 
+  design_mobile:
+    path: ../design_mobile
+
   tasks:
     path: ../tasks
   tasks_repository_mobile:

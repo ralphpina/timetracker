@@ -1,13 +1,11 @@
-import 'dart:async';
-
 import 'package:design_mobile/design_specs.dart';
 import 'package:flutter/material.dart';
 import 'package:tags/tags.dart';
 import 'package:tags_in_task_mobile/tag_selection.dart';
 import 'package:tags_in_task_mobile/tags_in_task_data_interactor_impl.dart';
 import 'package:tasks/tasks.dart';
+import 'package:tasks_mobile/create_task.dart';
 import 'package:tasks_mobile/tasks_data_interactor_impl.dart';
-import 'package:tasks_mobile/tasks_dialog.dart';
 import 'package:timetracker/shared/strings.dart';
 import 'package:ui_elements_mobile/ui_elements.dart';
 
@@ -30,14 +28,11 @@ class HomeState extends State<Home> {
         ),
       );
 
-  void _addTask() =>
-      _taskAddOrEditDialog().then((newTask) => insertTask(newTask));
-
   Widget _getTasksList() => new StreamBuilder<List<Task>>(
       stream: getAllTasksObservable().stream,
       builder: (context, snapshot) {
         return new ListView.builder(
-          padding: const EdgeInsets.all(16.0),
+          padding: normalPadding,
           itemCount: snapshot.hasData ? snapshot.data.length : 0,
           itemBuilder: (context, i) {
             return _buildRow(snapshot.data[i]);
@@ -129,15 +124,15 @@ class HomeState extends State<Home> {
     }
   }
 
-  void _editItem(Task task) =>
-      _taskAddOrEditDialog(task: task).then<Task>((updatedTask) {
-        updateTask(updatedTask);
-      });
+  void _addTask() => _openTaskEditSelector();
 
-  Future<Task> _taskAddOrEditDialog({Task task}) async => showDialog<Task>(
-        context: context,
-        builder: (context) => new AddOrEditTaskDialog(task),
-      );
+  void _editItem(Task task) => _openTaskEditSelector(task: task);
+
+  void _openTaskEditSelector({Task task}) => Navigator.of(context).push(
+    new MaterialPageRoute(
+      builder: (context) => new CreateTaskView(task),
+    ),
+  );
 
   void _manageTagsForTask(int tagId) => Navigator.of(context).push(
         new MaterialPageRoute(
